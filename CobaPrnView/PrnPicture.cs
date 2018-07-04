@@ -39,7 +39,7 @@ namespace CobaPrnView
         System.Drawing.SolidBrush _blackBush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
         System.Drawing.SolidBrush _whiteBush = new System.Drawing.SolidBrush(System.Drawing.Color.White);
         System.Drawing.SolidBrush _blueBush = new System.Drawing.SolidBrush(System.Drawing.Color.Blue);
-        private void _Clear()
+        public void _Clear()
         {
             using (System.Drawing.SolidBrush myBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Red))
             {

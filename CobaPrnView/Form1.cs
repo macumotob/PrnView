@@ -34,8 +34,6 @@ namespace CobaPrnView
                 Text = _currentFileName;
                 _viewer.Load(_currentFileName);
                 _picture = new PrnPicture(_viewer.LabelWidth, _viewer.LabelLength);
-                //_pic.Width = _viewer.LabelWidth;
-                //_pic.Height = _viewer.LabelLength;
                 _ShowPrnInfo();
             }
         }
@@ -44,11 +42,16 @@ namespace CobaPrnView
             _txtInfo.Text = string.Format("Label Length :{0}\r\nLabel Width : {1}\r\nHigh Resolution:{2}\r\nDot Offset : {3}",
                 _viewer.LabelLength, _viewer.LabelWidth,_viewer.UseHighResolution,_viewer.DotTabOffset);
             var x = _viewer.CurrentByte();
-           // _DrowPrn();
+            _Refresh();
         }
         private void _Init()
         {
-            _btnOpenPrn.Click += (s, e) => _CurrentFileName = Utils.OpenFile();
+            _btnOpenPrn.Click += (s, e) =>
+            {
+                _picture._Clear();
+                _pic.Image = _picture.Image;
+                _CurrentFileName = Utils.OpenFile();
+            };
             _btnRefresh.Click += (s, e) => { _viewer.ResetData(); _Refresh(); };
             _viewer.OnCommandReaded += _viewer_OnCommandReaded;
             string last = AppDomain.CurrentDomain.BaseDirectory + "\\data\\last_file.txt";
@@ -56,7 +59,7 @@ namespace CobaPrnView
             {
                 string x = System.IO.File.ReadAllText(last).Trim();
                 _CurrentFileName = x;
-                _Refresh();
+             //   _Refresh();
             }
         }
 

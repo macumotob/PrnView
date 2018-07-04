@@ -306,16 +306,5 @@ namespace CobaPrnView
             byte[] data = { _bt };
             return  new BitArray(data);
         }
-        public byte [] Data
-        {
-            get
-            {
-                int size = _bytes.Length - _dataOffset;
-                byte[] data = new byte[size];
-
-                Array.Copy(_bytes, _dataOffset, data, 0, size);
-                return data;
-            }
-        }
     }
 }
