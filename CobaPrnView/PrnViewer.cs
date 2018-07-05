@@ -352,6 +352,7 @@ namespace PrnView
             }
             if (_bt != ESC && _bt != BEGIN_DATA && _bt != BEGIN_VALIDE_DATA)
             {
+                EndJob = true;
                 return;
             }
             if(_bt == ESC)
