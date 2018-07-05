@@ -1,4 +1,4 @@
-﻿namespace CobaPrnView
+﻿namespace PrnView
 {
     partial class Form1
     {

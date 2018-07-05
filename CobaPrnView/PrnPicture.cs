@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CobaPrnView
+namespace PrnView
 {
 
     public class PrnPicture
@@ -18,17 +18,33 @@ namespace CobaPrnView
         private int _x = 0;
         private int _y = 0;
         private int _step = 1;
+        PrnViewer _viewer = new PrnViewer();
 
+        public PrnPicture()
+        {
+
+        }
         public PrnPicture(int width, int height)
         {
             _width = width;
             _height = height;
-            _bitmap = new Bitmap(_width * _step, _height *_step, System.Drawing.Imaging.PixelFormat.Format24bppRgb); // or some other format
+            _bitmap = new Bitmap(_width * _step, _height * _step, System.Drawing.Imaging.PixelFormat.Format24bppRgb); // or some other format
             _g = Graphics.FromImage(_bitmap);
             _y = -1 * _step;
             _Clear();
-
+            _viewer.OnCommandReaded += _viewer_OnCommandReaded;
         }
+        public void Init(int width, int height)
+        {
+            _width = width;
+            _height = height;
+            _bitmap = new Bitmap(_width * _step, _height * _step, System.Drawing.Imaging.PixelFormat.Format24bppRgb); // or some other format
+            _g = Graphics.FromImage(_bitmap);
+            _y = -1 * _step;
+            _Clear();
+            _viewer.OnCommandReaded += _viewer_OnCommandReaded;
+        }
+
         public Image Image
         {
             get
@@ -86,6 +102,56 @@ namespace CobaPrnView
                 _g.FillRectangle(_blueBush, new Rectangle(_x, _y, _step, _step)); // whatever
                 _x += _step;
             }
+        }
+        private void _viewer_OnCommandReaded(PrnCommands command, byte[] data, int count)
+        {
+            switch (command)
+            {
+                case PrnCommands.FeedLines:
+                    FeedLines(count);
+                    return;
+                case PrnCommands.LeftMargin:
+                    if (count > 0)
+                    {
+
+                    }
+                    return;
+                case PrnCommands.EndOfFile:
+                    return;
+                case PrnCommands.EndJob:
+
+                    //_pic.Image.Save(AppDomain.CurrentDomain.BaseDirectory + "\\data\\pic.png", ImageFormat.Png);
+                    return;
+                case PrnCommands.PrintComprLine:
+                    ResetX();
+                    for (int i = 0; i < count; i++)
+                    {
+                        DrawCompressed(data[i]);
+                    }
+                    return;
+
+                case PrnCommands.PrintLine:
+                    ResetX();
+                    for (int i = 0; i < count; i++)
+                    {
+                        Draw(data[i]);
+                    }
+                    return;
+
+            }
+        }
+        public string MakePng(string prnFile)
+        {
+            _viewer.Load(prnFile);
+            Init(_viewer.LabelWidth, _viewer.LabelLength);
+
+            while (!_viewer.EndJob)
+            {
+                _viewer.Read();
+            }
+            string output = prnFile.Replace(".prn",".png");
+            Image.Save(output);
+            return output;
         }
 
     }

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CobaPrnView
+namespace PrnView
 {
     public enum PrnCommands
     {
@@ -33,6 +33,8 @@ namespace CobaPrnView
         const byte RESOLUTION_HIGH = 0x69;
         const byte RESOLUTION_NORMAL = 0x68;
         const byte FEED_LINES_COMMAND = 0x66;
+        const byte FEED_LINES_COMMAND_V3 = 0x46;
+
         const byte BYTES_PER_LINE = 0x44;
         const byte LEFT_MARGIN = 0x42;
         const byte BEGIN_DATA = 0x17;
@@ -42,6 +44,8 @@ namespace CobaPrnView
         const byte SHORT_FORM_FEED = 0x47;
         const byte CUT_PAPER = 0x45;
         const byte END_JOB = 0x5A;
+
+        const byte RESOLUTION_HIGH_V3 = 0x49;
 
         const int V2_HEADER_LENGTH = 120;
         //v2
@@ -186,6 +190,41 @@ namespace CobaPrnView
             _next();
             _dataOffset = _index;
         }
+        private void _ValidateDataV3()
+        {
+            int dataLen = _bytes.Length;
+            if (dataLen <= 0) return;
+            _version = PrnVersion.V2;
+            if (!(_bt == ESC && _next() == RESET))
+            {
+                return;
+            }
+            if (_next() == ESC && _next() == DOT_TAB_OFFSET)
+            {
+                _dotTabOffset = _next();
+            }
+            if (_next() == ESC)
+            {
+                _next();
+                if (_bt != RESOLUTION_HIGH_V3)
+                {
+                    throw new Exception("Invalide format");
+                }
+                _use_high_resolution = _bt == RESOLUTION_HIGH_V3;
+            }
+            //if(_next() == ESC && _next() == FEED_LINES_COMMAND)
+            //{
+            //    _feedLines = _next() * 256 + _next();
+            //}
+            //int i = 0;
+            //while(i< _labelWidth)
+            //{
+            //    i++;
+            //    _next();
+            //}
+            _next();
+            _dataOffset = _index;
+        }
         public void ResetData()
         {
             _index = _dataOffset;
@@ -197,6 +236,7 @@ namespace CobaPrnView
                 OnCommandReaded(command, data,count);
             }
         }
+        public bool EndJob = false;
         public bool EOF
         {
             get
@@ -205,6 +245,104 @@ namespace CobaPrnView
             }
         }
         private byte _bytesPerLine;
+        public void Read_V3()
+        {
+            if (_index >= _bytes.Length)
+            {
+                RaiseCommandReaded(PrnCommands.EndOfFile);
+                return;
+            }
+            if (_bt != ESC && _bt != BEGIN_DATA && _bt != BEGIN_VALIDE_DATA)
+            {
+                return;
+            }
+            if (_bt == ESC)
+            {
+                _next();
+            }
+            if (_bt == FEED_LINES_COMMAND_V3)
+            {
+                _feedLines = _next() * 256 + _next();
+                RaiseCommandReaded(PrnCommands.FeedLines, null, _feedLines);
+                _next();
+                return;
+            }
+            if (_bt == BYTES_PER_LINE)
+            {
+                _bytesPerLine = _next();
+                RaiseCommandReaded(PrnCommands.BytesPerLine);
+                _next();
+                return;
+            }
+            if (_bt == LEFT_MARGIN)
+            {
+                int leftMargin = _next();
+                RaiseCommandReaded(PrnCommands.LeftMargin, null, leftMargin);
+                _next();
+                return;
+            }
+            if (_bt == BEGIN_DATA)
+            {
+                _next();
+                int i = 0;
+                byte[] data = new byte[_bytesPerLine];
+                while (i < _bytesPerLine && _bt != ESC && _bt != BEGIN_DATA)
+                {
+                    data[i] = _bt;
+                    _next();
+                    i++;
+
+                }
+                RaiseCommandReaded(PrnCommands.PrintComprLine, data, i);
+
+                return;
+
+            }
+            if (_bt == BEGIN_VALIDE_DATA)
+            {
+                _next();
+                int i = 0;
+                byte[] data = new byte[_bytesPerLine];
+                while (i < _bytesPerLine)// && _bt != ESC && _bt != BEGIN_DATA)
+                {
+                    data[i] = _bt;
+                    _next();
+                    i++;
+
+                }
+                RaiseCommandReaded(PrnCommands.PrintLine, data, i);
+
+                return;
+
+            }
+            if (_bt == SHORT_FORM_FEED)
+            {
+                _next();
+                return;
+            }
+            if (_bt == CUT_PAPER)
+            {
+                _next();
+                return;
+            }
+            if (_bt == RESET)
+            {
+                _next();
+                return;
+            }
+            if (_bt == END_JOB)
+            {
+                RaiseCommandReaded(PrnCommands.EndJob);
+                EndJob = true;
+                _next();
+                return;
+            }
+            else
+            {
+
+            }
+        }
+
         public void Read()
         {
             if(_index >= _bytes.Length)
