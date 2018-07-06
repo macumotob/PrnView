@@ -9,7 +9,8 @@ namespace PrnView
     public enum PrinGetPost
     {
         Get,
-        Post
+        Post,
+        WebSocket,
     }
     class RequestParser
     {
@@ -92,7 +93,7 @@ namespace PrnView
             {
                 return PrinGetPost.Post;
             }
-            throw new Exception("unsupported method");
+            return PrinGetPost.WebSocket; throw new Exception("unsupported method");
         }
     }
 }

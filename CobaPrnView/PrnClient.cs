@@ -125,7 +125,7 @@ namespace PrnView
             // Закроем файл и соединение
             FS.Close();
             _client.Close();
-            _needClose = true;
+            _keepAlive = false;
         }
         private void _SendResponse(PrinGetPost method, string url)
         {
@@ -237,7 +237,7 @@ namespace PrnView
             }
          //   _client.Close();
         }
-        private bool _needClose = false;
+        private bool _keepAlive = true;
         private void _ReadRequest()
         {
             string request = "";
@@ -245,11 +245,12 @@ namespace PrnView
             int count;
 
             //if (_client.Connected && _client.Client.Available > 0)
-            while(!_needClose)
+            while(_keepAlive)
             {
                 while ((count = _client.GetStream().Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    if (_parser.GetMethod(buffer) == PrinGetPost.Get)
+                    var method = _parser.GetMethod(buffer);
+                    if (method == PrinGetPost.Get)
                     {
                         int index = _parser.FindEndOfHeader(buffer, 0);
                         request += Encoding.ASCII.GetString(buffer, 0, index);
@@ -260,6 +261,10 @@ namespace PrnView
                         }
                         _parser.Parse(request);
                         break;
+                    }
+                    else if (method == PrinGetPost.WebSocket)
+                    {
+                        string message = Utils.DecodeMessage(buffer);
                     }
                     else
                     {
