@@ -17,11 +17,11 @@ namespace PrnView
         static void Main()
         {
             Task.Run( ()=> new PrnServer(3044));
-
-            while (true)
-            {
-                Thread.Sleep(5000);
-            }
+            Console.ReadKey();
+            //while (true)
+            //{
+            //    Thread.Sleep(5000);
+            //}
             //Utils.TestRenderLine();
             //return;
             //Application.EnableVisualStyles();
